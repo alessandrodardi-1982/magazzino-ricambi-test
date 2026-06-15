@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione Ricambi — Termoflex Srl</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #2ca1fe;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --green: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --purple: #a78bfa;
+    --cls-a: #ef4444;
+    --cls-b: #f59e0b;
+    --cls-c: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1829 0%, #0a1520 50%, #0d1829 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+  }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-icon { width: 44px; height: 44px; background: linear-gradient(135deg, #f59e0b, #ef4444); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .brand-name { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 2px; }
+  .brand-title { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 700; color: var(--text); }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+
+  /* KPI */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .kpi { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .kpi-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500; color: var(--text); line-height: 1; }
+  .kpi-value span { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .kpi-accent { border-top: 2px solid var(--accent); }
+  .kpi-danger { border-top: 2px solid var(--danger); }
+  .kpi-warn { border-top: 2px solid var(--warn); }
+  .kpi-green { border-top: 2px solid var(--green); }
+  .kpi-purple { border-top: 2px solid var(--purple); }
+
+  /* MAIN */
+  .main { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+  .section-title { font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  .card-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* ALERT CARDS */
+  .alert-list { display: flex; flex-direction: column; gap: 10px; }
+  .alert-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .alert-item.critico { border-left: 3px solid var(--danger); }
+  .alert-item.warning { border-left: 3px solid var(--warn); }
+  .alert-codice { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .alert-desc { font-size: 13px; color: var(--text); font-weight: 500; }
+  .alert-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .alert-badge { flex-shrink: 0; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .badge-esaurito { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-sottoscorta { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.25); }
+  .badge-fermo { background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+
+  /* TABELLA RICAMBI */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(30,45,69,0.5); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .cls-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+  .cls-a { background: rgba(239,68,68,0.15); color: var(--cls-a); }
+  .cls-b { background: rgba(245,158,11,0.12); color: var(--cls-b); }
+  .cls-c { background: rgba(16,185,129,0.12); color: var(--cls-c); }
+  .stato-ok { color: var(--green); font-size: 12px; }
+  .stato-warn { color: var(--warn); font-size: 12px; font-weight: 600; }
+  .stato-danger { color: var(--danger); font-size: 12px; font-weight: 600; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* RIORDINO */
+  .riordino-list { display: flex; flex-direction: column; gap: 10px; }
+  .riordino-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .riordino-item.urgente { border-left: 3px solid var(--danger); }
+  .riordino-item.normale { border-left: 3px solid var(--warn); }
+  .riordino-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .riordino-nome { font-size: 13px; font-weight: 500; color: var(--text); }
+  .riordino-costo { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); }
+  .riordino-detail { font-size: 12px; color: var(--text-muted); }
+
+  /* WORK NOTE */
+  .work-note { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--warn); margin-bottom: 22px; display: flex; align-items: flex-start; gap: 8px; }
+
+  /* AI */
+  .ai-btn { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), #1a7fd4); color: white; border: none; border-radius: 10px; padding: 13px 26px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(44,161,254,0.35); }
+  .ai-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .ai-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ai-result { display: none; margin-top: 18px; background: var(--surface2); border: 1px solid rgba(44,161,254,0.2); border-left: 3px solid var(--accent); border-radius: 10px; padding: 22px; }
+  .ai-label { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .ai-result-text { font-size: 14px; color: var(--text-dim); line-height: 1.75; white-space: pre-wrap; }
+  .ai-error { display: none; margin-top: 14px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--danger); }
+
+  .footer { text-align: center; padding: 22px 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* FILTRI */
+  .filtri { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filtro-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 14px; font-size: 12px; color: var(--text-dim); cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .filtro-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filtro-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  @media (max-width: 768px) {
+    .header, .main { padding: 18px; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">🔧</div>
+      <div>
+        <div class="brand-name">Termoflex Srl · Bologna</div>
+        <div class="brand-title">Gestione Ricambi & Magazzino</div>
+      </div>
+    </div>
+    <div class="badge">Gen 2023 – Giu 2024</div>
+  </div>
+  <div class="kpi-strip">
+    <div class="kpi kpi-accent">
+      <div class="kpi-label">Articoli a magazzino</div>
+      <div class="kpi-value">20</div>
+      <div class="kpi-sub">3 categorie · 121 utilizzi</div>
+    </div>
+    <div class="kpi kpi-danger">
+      <div class="kpi-label">Esauriti</div>
+      <div class="kpi-value">1</div>
+      <div class="kpi-sub">intervento bloccato</div>
+    </div>
+    <div class="kpi kpi-warn">
+      <div class="kpi-label">Sotto scorta minima</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-sub">riordino urgente</div>
+    </div>
+    <div class="kpi kpi-green">
+      <div class="kpi-label">Valore magazzino</div>
+      <div class="kpi-value">8.921<span> €</span></div>
+      <div class="kpi-sub">giacenza attuale</div>
+    </div>
+    <div class="kpi kpi-purple">
+      <div class="kpi-label">Valore fermo</div>
+      <div class="kpi-value">780<span> €</span></div>
+      <div class="kpi-sub">bassa rotazione</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="work-note">
+    <span>⚠</span>
+    <span><strong>Dati dimostrativi</strong> — Dataset sintetico (20 articoli, 121 interventi su 18 mesi). Le criticità sono inserite per illustrare la logica di analisi. Il metodo è applicabile a dati reali da qualsiasi gestionale.</span>
+  </div>
+
+  <!-- ALERT + RIORDINI -->
+  <div class="section-title">Criticità immediate</div>
+  <div class="grid-2" style="margin-bottom:18px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--danger)"></span>Alert stock</div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--warn)"></span>Suggerimenti riordino</div>
+      <div class="riordino-list" id="riordino-list"></div>
+    </div>
+  </div>
+
+  <!-- ABC + GRAFICI -->
+  <div class="section-title">ABC Analysis</div>
+  <div class="grid-3" style="margin-bottom:18px;">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--cls-a)"></span>Valore consumato per classe</div>
+      <div class="chart-wrap"><canvas id="chartABC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Distribuzione per categoria</div>
+      <div class="chart-wrap"><canvas id="chartCategoria"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Top 6 articoli per utilizzo</div>
+      <div class="chart-wrap"><canvas id="chartTop"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TABELLA COMPLETA -->
+  <div class="section-title">Anagrafica magazzino</div>
+  <div class="card" style="margin-bottom:18px;">
+    <div class="filtri">
+      <button class="filtro-btn active" onclick="filtra('tutti', this)">Tutti</button>
+      <button class="filtro-btn" onclick="filtra('A', this)">Classe A</button>
+      <button class="filtro-btn" onclick="filtra('B', this)">Classe B</button>
+      <button class="filtro-btn" onclick="filtra('C', this)">Classe C</button>
+      <button class="filtro-btn" onclick="filtra('alert', this)">⚠ Solo alert</button>
+      <button class="filtro-btn" onclick="filtra('fermo', this)">Fermi</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabella-ricambi">
+        <thead>
+          <tr>
+            <th>Codice</th>
+            <th>Descrizione</th>
+            <th>Categoria</th>
+            <th>Classe</th>
+            <th>Giacenza</th>
+            <th>Scorta min.</th>
+            <th>Stato</th>
+            <th>Utilizzi 18m</th>
+            <th>Valore consumato</th>
+            <th>Ultimo utilizzo</th>
+          </tr>
+        </thead>
+        <tbody id="tabella-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div class="section-title">Analisi AI</div>
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Diagnosi intelligente del magazzino</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">
+      Premi il bottone per inviare i dati di magazzino a Claude. L'AI analizza la classificazione ABC, le criticità di stock e i ricambi fermi, restituendo un piano d'azione prioritizzato.
+    </p>
+    <button class="ai-btn" id="ai-btn" onclick="analizzaConAI()">
+      <span id="ai-icon">🤖</span>
+      <span id="ai-spin" class="ai-spinner"></span>
+      <span id="ai-txt">Analizza con AI</span>
+    </button>
+    <div class="ai-result" id="ai-result">
+      <div class="ai-label"><span>🤖</span> Analisi Claude — claude-sonnet-4-6</div>
+      <div class="ai-result-text" id="ai-result-text"></div>
+    </div>
+    <div class="ai-error" id="ai-error">⚠ Errore nella chiamata AI. Verifica la connessione o riprova tra qualche secondo.</div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Portfolio · <a href="https://alessandro-dardi.netlify.app" target="_blank">Alessandro Dardi</a> · Operations &amp; Digital Automation · Bologna
+</div>
+
+<script>
+const RICAMBI = [
+  {codice:"FLT-001",descrizione:"Filtro aria compressore 50μm",categoria:"Aria compressa",classe_abc:"A",prezzo_unitario:45,scorta_minima:10,giacenza_attuale:7,valore_giacenza:315,totale_utilizzi_18m:24,valore_consumato_18m:1188,ultimo_utilizzo:"2024-05-18",fermo_magazzino:false,lead_time_gg:3,riordino:{urgente:false,qty_suggerita:13,costo_stimato:585,lead_time_gg:3}},
+  {codice:"VAL-012",descrizione:"Valvola di sicurezza 10 bar",categoria:"Aria compressa",classe_abc:"A",prezzo_unitario:210,scorta_minima:4,giacenza_attuale:1,valore_giacenza:210,totale_utilizzi_18m:10,valore_consumato_18m:2226,ultimo_utilizzo:"2024-06-01",fermo_magazzino:false,lead_time_gg:7,riordino:{urgente:true,qty_suggerita:7,costo_stimato:1470,lead_time_gg:7}},
+  {codice:"SEP-003",descrizione:"Separatore olio/aria",categoria:"Aria compressa",classe_abc:"A",prezzo_unitario:185,scorta_minima:3,giacenza_attuale:4,valore_giacenza:740,totale_utilizzi_18m:8,valore_consumato_18m:1554,ultimo_utilizzo:"2024-04-12",fermo_magazzino:false,lead_time_gg:5,riordino:null},
+  {codice:"CIN-007",descrizione:"Cinghia trasmissione compressore",categoria:"Meccanica",classe_abc:"B",prezzo_unitario:38,scorta_minima:6,giacenza_attuale:8,valore_giacenza:304,totale_utilizzi_18m:18,valore_consumato_18m:702,ultimo_utilizzo:"2024-05-30",fermo_magazzino:false,lead_time_gg:2,riordino:null},
+  {codice:"GAS-R32",descrizione:"Gas refrigerante R-32 (bombola 10kg)",categoria:"Refrigerazione",classe_abc:"A",prezzo_unitario:320,scorta_minima:2,giacenza_attuale:0,valore_giacenza:0,totale_utilizzi_18m:9,valore_consumato_18m:2784,ultimo_utilizzo:"2024-06-10",fermo_magazzino:false,lead_time_gg:5,riordino:{urgente:true,qty_suggerita:4,costo_stimato:1280,lead_time_gg:5}},
+  {codice:"CMP-FR2",descrizione:"Compressore scroll frigo 5HP",categoria:"Refrigerazione",classe_abc:"A",prezzo_unitario:1250,scorta_minima:1,giacenza_attuale:2,valore_giacenza:2500,totale_utilizzi_18m:3,valore_consumato_18m:3750,ultimo_utilizzo:"2024-03-20",fermo_magazzino:false,lead_time_gg:14,riordino:null},
+  {codice:"GUA-SIL",descrizione:"Guarnizione silicone alta temp. (kit)",categoria:"Meccanica",classe_abc:"C",prezzo_unitario:28,scorta_minima:8,giacenza_attuale:12,valore_giacenza:336,totale_utilizzi_18m:20,valore_consumato_18m:588,ultimo_utilizzo:"2024-06-05",fermo_magazzino:false,lead_time_gg:2,riordino:null},
+  {codice:"POM-CEN",descrizione:"Pompa centrifuga 2\" inox",categoria:"Meccanica",classe_abc:"A",prezzo_unitario:480,scorta_minima:2,giacenza_attuale:1,valore_giacenza:480,totale_utilizzi_18m:4,valore_consumato_18m:1872,ultimo_utilizzo:"2024-05-08",fermo_magazzino:false,lead_time_gg:10,riordino:{urgente:false,qty_suggerita:3,costo_stimato:1440,lead_time_gg:10}},
+  {codice:"FLT-OLI",descrizione:"Filtro olio lubrificante compressore",categoria:"Aria compressa",classe_abc:"C",prezzo_unitario:32,scorta_minima:5,giacenza_attuale:6,valore_giacenza:192,totale_utilizzi_18m:12,valore_consumato_18m:378,ultimo_utilizzo:"2024-04-28",fermo_magazzino:false,lead_time_gg:3,riordino:null},
+  {codice:"MAN-DIG",descrizione:"Manometro digitale 0-16 bar",categoria:"Aria compressa",classe_abc:"B",prezzo_unitario:95,scorta_minima:3,giacenza_attuale:3,valore_giacenza:285,totale_utilizzi_18m:5,valore_consumato_18m:475,ultimo_utilizzo:"2024-03-15",fermo_magazzino:false,lead_time_gg:5,riordino:null},
+  {codice:"TER-EXP",descrizione:"Valvola termostatica espansione",categoria:"Refrigerazione",classe_abc:"B",prezzo_unitario:145,scorta_minima:2,giacenza_attuale:2,valore_giacenza:290,totale_utilizzi_18m:7,valore_consumato_18m:870,ultimo_utilizzo:"2024-05-22",fermo_magazzino:false,lead_time_gg:7,riordino:null},
+  {codice:"SCM-ALU",descrizione:"Scambiatore di calore alluminio",categoria:"Refrigerazione",classe_abc:"B",prezzo_unitario:390,scorta_minima:1,giacenza_attuale:2,valore_giacenza:780,totale_utilizzi_18m:2,valore_consumato_18m:780,ultimo_utilizzo:"2023-11-10",fermo_magazzino:true,lead_time_gg:12,riordino:null},
+  {codice:"CUS-SKF",descrizione:"Cuscinetto SKF 6205-2RS",categoria:"Meccanica",classe_abc:"C",prezzo_unitario:18,scorta_minima:10,giacenza_attuale:15,valore_giacenza:270,totale_utilizzi_18m:11,valore_consumato_18m:198,ultimo_utilizzo:"2024-04-05",fermo_magazzino:false,lead_time_gg:2,riordino:null},
+  {codice:"SAB-MEC",descrizione:"Sabbie abrasive per pulizia (sacco 25kg)",categoria:"Meccanica",classe_abc:"C",prezzo_unitario:22,scorta_minima:4,giacenza_attuale:5,valore_giacenza:110,totale_utilizzi_18m:6,valore_consumato_18m:132,ultimo_utilizzo:"2024-02-18",fermo_magazzino:false,lead_time_gg:3,riordino:null},
+  {codice:"VEN-ASS",descrizione:"Ventilatore assiale condensatore",categoria:"Refrigerazione",classe_abc:"B",prezzo_unitario:175,scorta_minima:2,giacenza_attuale:3,valore_giacenza:525,totale_utilizzi_18m:5,valore_consumato_18m:700,ultimo_utilizzo:"2024-05-14",fermo_magazzino:false,lead_time_gg:7,riordino:null},
+  {codice:"TUB-RAM",descrizione:"Tubo ramato 3/8\" (rotolo 25m)",categoria:"Refrigerazione",classe_abc:"C",prezzo_unitario:85,scorta_minima:1,giacenza_attuale:8,valore_giacenza:680,totale_utilizzi_18m:2,valore_consumato_18m:170,ultimo_utilizzo:"2023-09-20",fermo_magazzino:true,lead_time_gg:5,riordino:null},
+  {codice:"ELE-CON",descrizione:"Contattore elettrico 25A",categoria:"Meccanica",classe_abc:"C",prezzo_unitario:42,scorta_minima:3,giacenza_attuale:7,valore_giacenza:294,totale_utilizzi_18m:3,valore_consumato_18m:126,ultimo_utilizzo:"2023-10-05",fermo_magazzino:true,lead_time_gg:3,riordino:null},
+  {codice:"OLI-SIN",descrizione:"Olio sintetico compressore (5L)",categoria:"Aria compressa",classe_abc:"C",prezzo_unitario:68,scorta_minima:3,giacenza_attuale:4,valore_giacenza:272,totale_utilizzi_18m:5,valore_consumato_18m:340,ultimo_utilizzo:"2024-01-30",fermo_magazzino:false,lead_time_gg:3,riordino:null},
+  {codice:"FLT-DES",descrizione:"Filtro desiccante essiccatore",categoria:"Aria compressa",classe_abc:"C",prezzo_unitario:55,scorta_minima:2,giacenza_attuale:2,valore_giacenza:110,totale_utilizzi_18m:4,valore_consumato_18m:220,ultimo_utilizzo:"2024-03-08",fermo_magazzino:false,lead_time_gg:4,riordino:null},
+  {codice:"RES-ELE",descrizione:"Resistenza elettrica sbrinamento",categoria:"Refrigerazione",classe_abc:"C",prezzo_unitario:38,scorta_minima:2,giacenza_attuale:6,valore_giacenza:228,totale_utilizzi_18m:2,valore_consumato_18m:76,ultimo_utilizzo:"2023-08-14",fermo_magazzino:true,lead_time_gg:5,riordino:null}
+];
+
+// ALERT LIST
+const alertEl = document.getElementById('alert-list');
+const esauriti = RICAMBI.filter(r => r.giacenza_attuale === 0);
+const sottoScorta = RICAMBI.filter(r => r.giacenza_attuale > 0 && r.giacenza_attuale < r.scorta_minima);
+const fermi = RICAMBI.filter(r => r.fermo_magazzino);
+
+esauriti.forEach(r => {
+  alertEl.innerHTML += `<div class="alert-item critico">
+    <div><div class="alert-codice">${r.codice}</div><div class="alert-desc">${r.descrizione}</div><div class="alert-meta">Lead time: ${r.lead_time_gg} giorni · intervento bloccato</div></div>
+    <span class="alert-badge badge-esaurito">ESAURITO</span></div>`;
+});
+sottoScorta.forEach(r => {
+  alertEl.innerHTML += `<div class="alert-item warning">
+    <div><div class="alert-codice">${r.codice}</div><div class="alert-desc">${r.descrizione}</div><div class="alert-meta">Giacenza: ${r.giacenza_attuale} · Minima: ${r.scorta_minima}</div></div>
+    <span class="alert-badge badge-sottoscorta">SCORTA BASSA</span></div>`;
+});
+fermi.forEach(r => {
+  alertEl.innerHTML += `<div class="alert-item" style="border-left:3px solid var(--purple)">
+    <div><div class="alert-codice">${r.codice}</div><div class="alert-desc">${r.descrizione}</div><div class="alert-meta">Ultimo utilizzo: ${r.ultimo_utilizzo} · Valore: €${r.valore_giacenza}</div></div>
+    <span class="alert-badge badge-fermo">FERMO</span></div>`;
+});
+
+// RIORDINI
+const riordEl = document.getElementById('riordino-list');
+RICAMBI.filter(r => r.riordino).forEach(r => {
+  const cls = r.riordino.urgente ? 'urgente' : 'normale';
+  const label = r.riordino.urgente ? '🔴 URGENTE' : '🟡 Pianificare';
+  riordEl.innerHTML += `<div class="riordino-item ${cls}">
+    <div class="riordino-header">
+      <span class="riordino-nome">${r.descrizione}</span>
+      <span class="riordino-costo">€${r.riordino.costo_stimato.toLocaleString('it-IT')}</span>
+    </div>
+    <div class="riordino-detail">${label} · Qty: ${r.riordino.qty_suggerita} pz · Lead time: ${r.riordino.lead_time_gg} gg</div>
+  </div>`;
+});
+
+// CHART ABC
+const valABC = {A:0, B:0, C:0};
+RICAMBI.forEach(r => valABC[r.classe_abc] += r.valore_consumato_18m);
+new Chart(document.getElementById('chartABC'), {
+  type: 'bar',
+  data: {
+    labels: ['Classe A', 'Classe B', 'Classe C'],
+    datasets: [{
+      data: [valABC.A, valABC.B, valABC.C],
+      backgroundColor: ['rgba(239,68,68,0.7)', 'rgba(245,158,11,0.7)', 'rgba(16,185,129,0.7)'],
+      borderColor: ['#ef4444','#f59e0b','#10b981'],
+      borderWidth: 1, borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `€${ctx.raw.toLocaleString('it-IT')}` } } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b', callback: v => '€'+(v/1000).toFixed(0)+'k' } }
+    }
+  }
+});
+
+// CHART CATEGORIA
+const valCat = {'Aria compressa':0, 'Refrigerazione':0, 'Meccanica':0};
+RICAMBI.forEach(r => valCat[r.categoria] += r.valore_consumato_18m);
+new Chart(document.getElementById('chartCategoria'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(valCat),
+    datasets: [{ data: Object.values(valCat), backgroundColor: ['rgba(44,161,254,0.7)','rgba(167,139,250,0.7)','rgba(0,212,170,0.7)'], borderColor: ['#2ca1fe','#a78bfa','#00d4aa'], borderWidth: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '65%',
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 12 } }, tooltip: { callbacks: { label: ctx => `€${ctx.raw.toLocaleString('it-IT')}` } } }
+  }
+});
+
+// CHART TOP 6
+const top6 = [...RICAMBI].sort((a,b) => b.totale_utilizzi_18m - a.totale_utilizzi_18m).slice(0,6);
+new Chart(document.getElementById('chartTop'), {
+  type: 'bar',
+  data: {
+    labels: top6.map(r => r.codice),
+    datasets: [{ data: top6.map(r => r.totale_utilizzi_18m), backgroundColor: 'rgba(44,161,254,0.6)', borderColor: '#2ca1fe', borderWidth: 1, borderRadius: 4 }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw} utilizzi` } } },
+    scales: {
+      x: { grid: { color: '#1e2d45' }, ticks: { color: '#64748b' } },
+      y: { grid: { color: '#1e2d45' }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 11 } } }
+    }
+  }
+});
+
+// TABELLA
+let filtroAttivo = 'tutti';
+function filtra(tipo, btn) {
+  filtroAttivo = tipo;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTabella();
+}
+
+function renderTabella() {
+  const body = document.getElementById('tabella-body');
+  let dati = RICAMBI;
+  if (filtroAttivo === 'A') dati = RICAMBI.filter(r => r.classe_abc === 'A');
+  else if (filtroAttivo === 'B') dati = RICAMBI.filter(r => r.classe_abc === 'B');
+  else if (filtroAttivo === 'C') dati = RICAMBI.filter(r => r.classe_abc === 'C');
+  else if (filtroAttivo === 'alert') dati = RICAMBI.filter(r => r.giacenza_attuale < r.scorta_minima);
+  else if (filtroAttivo === 'fermo') dati = RICAMBI.filter(r => r.fermo_magazzino);
+
+  body.innerHTML = dati.map(r => {
+    let statoHtml = `<span class="stato-ok">✓ OK</span>`;
+    if (r.giacenza_attuale === 0) statoHtml = `<span class="stato-danger">⛔ Esaurito</span>`;
+    else if (r.giacenza_attuale < r.scorta_minima) statoHtml = `<span class="stato-warn">⚠ Scorta bassa</span>`;
+    else if (r.fermo_magazzino) statoHtml = `<span style="color:var(--purple);font-size:12px">◆ Fermo</span>`;
+
+    return `<tr>
+      <td class="mono">${r.codice}</td>
+      <td style="max-width:200px;font-size:13px">${r.descrizione}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${r.categoria}</td>
+      <td><span class="cls-badge cls-${r.classe_abc.toLowerCase()}">${r.classe_abc}</span></td>
+      <td class="mono" style="font-weight:600">${r.giacenza_attuale}</td>
+      <td class="mono" style="color:var(--text-muted)">${r.scorta_minima}</td>
+      <td>${statoHtml}</td>
+      <td class="mono">${r.totale_utilizzi_18m}</td>
+      <td class="mono">€${r.valore_consumato_18m.toLocaleString('it-IT')}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${r.ultimo_utilizzo}</td>
+    </tr>`;
+  }).join('');
+}
+renderTabella();
+
+// AI
+async function analizzaConAI() {
+  const btn = document.getElementById('ai-btn');
+  const icon = document.getElementById('ai-icon');
+  const spin = document.getElementById('ai-spin');
+  const txt = document.getElementById('ai-txt');
+  const res = document.getElementById('ai-result');
+  const resTxt = document.getElementById('ai-result-text');
+  const err = document.getElementById('ai-error');
+
+  btn.disabled = true; icon.style.display = 'none'; spin.style.display = 'block';
+  txt.textContent = 'Analisi in corso…'; res.style.display = 'none'; err.style.display = 'none';
+
+  const alertSummary = [
+    ...RICAMBI.filter(r => r.giacenza_attuale === 0).map(r => `ESAURITO: ${r.codice} ${r.descrizione} (lead time ${r.lead_time_gg}gg)`),
+    ...RICAMBI.filter(r => r.giacenza_attuale > 0 && r.giacenza_attuale < r.scorta_minima).map(r => `SOTTO SCORTA: ${r.codice} ${r.descrizione} — giacenza ${r.giacenza_attuale} vs minima ${r.scorta_minima}`),
+    ...RICAMBI.filter(r => r.fermo_magazzino).map(r => `FERMO: ${r.codice} ${r.descrizione} — ultimo utilizzo ${r.ultimo_utilizzo}, valore €${r.valore_giacenza}`)
+  ].join('\n');
+
+  const abcSummary = `Classe A (70% valore): ${RICAMBI.filter(r=>r.classe_abc==='A').map(r=>r.codice).join(', ')}
+Classe B (20% valore): ${RICAMBI.filter(r=>r.classe_abc==='B').map(r=>r.codice).join(', ')}
+Classe C (10% valore): ${RICAMBI.filter(r=>r.classe_abc==='C').map(r=>r.codice).join(', ')}`;
+
+  const prompt = `Sei un magazziniere senior specializzato in ricambi industriali. Analizza la situazione del magazzino ricambi di Termoflex Srl (impianti aria compressa, refrigerazione, meccanica) per il periodo Gen 2023 – Giu 2024.
+
+SOMMARIO:
+- 20 articoli a magazzino, valore totale €8.921
+- 1 articolo esaurito, 3 sotto scorta minima
+- Valore fermo (bassa rotazione): €780
+
+CLASSIFICAZIONE ABC:
+${abcSummary}
+
+CRITICITÀ RILEVATE:
+${alertSummary}
+
+TOP ARTICOLI PER UTILIZZO (18 mesi):
+${[...RICAMBI].sort((a,b)=>b.totale_utilizzi_18m-a.totale_utilizzi_18m).slice(0,5).map(r=>`${r.codice} ${r.descrizione}: ${r.totale_utilizzi_18m} utilizzi, €${r.valore_consumato_18m} consumato`).join('\n')}
+
+Produci una diagnosi operativa con:
+1. Valutazione della gestione attuale del magazzino
+2. Impatto operativo delle criticità (cosa rischia l'azienda)
+3. Piano d'azione prioritizzato (4-5 azioni concrete)
+4. Raccomandazioni sulla politica di scorta per classe ABC
+
+Tono: professionale, diretto, orientato all'azione. Rispondi in italiano.`;
+
+  try {
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await response.json();
+    if (data.content && data.content[0] && data.content[0].text) {
+      resTxt.textContent = data.content[0].text;
+      res.style.display = 'block';
+      res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else throw new Error('Risposta non valida');
+  } catch(e) {
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false; icon.style.display = 'block'; spin.style.display = 'none';
+    txt.textContent = 'Analizza con AI';
+  }
+}
+</script>
+</body>
+</html>
